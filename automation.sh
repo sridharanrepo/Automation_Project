@@ -64,3 +64,51 @@ echo " Tar File is sending to AWS S3 Bucket "
 
 	aws s3 cp /tmp/$LOGS s3://$bucketID/$LOGS;
 
+## This process is for Bookkeeping
+
+inventorybook=/var/www/html/inventory.html
+logType="httpd-logs"
+timestamp=$(stat --printf%y/tmp/$LOGS | cut-d.-f1)
+fileType=${LOGS##*.}
+fileSize=$(ls-lh/tmp/${LOGS} | cut -d " " -f5)
+
+echo " FILE NAME : $LOGS "
+echo " LOG TYPE : $logType "
+echo " CREATED TIME : $timestamp "
+echo " FILE TYPE : $fileType "
+echo " FILE SIZE : $fileSize "
+
+## Now to check whether inventory file is created already or not. if not, now it will be created
+
+if sudo test -f "$inventorybook"
+then
+        echo "<br>${logType}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${timestamp}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fileType}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fileSize}">>"${inventorybook}"
+        echo " File has been Updated in Inventory "
+else
+        echo " Creating Now '$inventorybook' "
+        touch ${inventorybook}
+        echo  " <b>LOG TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DATE CREATED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SIZE</b>">>"${inventorybook}"
+        echo "<br>${logType}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${timestamp}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fileType}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${fileSize}">>"${inventorybook}"
+        echo " '$inventorybook' is Created with all Content "
+fi
+
+
+## Now cron job will execute the script every day as schedule
+
+CRON=/etc/cron.d/automation
+
+if test -f "$CRON"
+
+then
+	
+	echo " CRON JOB IS ACTIVE "
+else
+	
+	echo " NOW CRON JOB IS CREATING $CRON "
+	touch $CRON
+	echo "SHELL=/bin/bash"> $CRON
+	echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/urs/games:/usr/local/games:/snap/bin" >> $CRON
+	echo "1 1 * * * root /root/Automation_Project/automation.sh" >> $CRON
+	echo " CRON JOB ASIGNED "
+fi
+
